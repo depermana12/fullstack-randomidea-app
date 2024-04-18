@@ -1,3 +1,4 @@
+const path = require("path");
 const express = require("express");
 const connectDB = require("./config/db");
 require("dotenv").config();
@@ -5,6 +6,9 @@ const app = express();
 const port = process.env.PORT;
 
 connectDB();
+
+// static folder
+app.use(express.static(path.join(__dirname, "public")));
 
 // we need to accept a raw data json
 // using bodyparser middleware, parsing data in the body
