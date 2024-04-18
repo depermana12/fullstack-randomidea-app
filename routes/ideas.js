@@ -42,4 +42,54 @@ router.get("/:id", (req, res) => {
   res.json({ success: true, data: idea });
 });
 
+// add middleware to say that if we go to an api/ideas. then we want to look at that folder files
+// by adding middleware is on the request object, when we get the request then we can access req.body.field
+
+// Add and idea
+router.post("/", (req, res) => {
+  const idea = {
+    id: ideas.length + 1,
+    text: req.body.text,
+    tag: req.body.tag,
+    username: req.body.username,
+    date: req.body.date,
+  };
+
+  ideas.push(idea);
+
+  res.json({ success: true, data: ideas });
+});
+
+// update post
+router.put("/:id", (req, res) => {
+  const idea = ideas.find((idea) => (idea.id = +req.params.id));
+
+  if (!idea) {
+    return req
+      .status(400)
+      .json({ success: false, error: "Resource not found" });
+  }
+
+  idea.text = req.body.text || idea.text;
+  idea.tag = req.body.tag || idea.tag;
+
+  res.json({ success: true, data: idea });
+});
+
+// delete post
+router.delete("/:id", (req, res) => {
+  const idea = ideas.find((idea) => (idea.id = +req.params.id));
+
+  if (!idea) {
+    return req
+      .status(400)
+      .json({ success: false, error: "Resource not found" });
+  }
+
+  const index = ideas.indexOf(idea);
+  ideas.splice(index, 1);
+
+  res.json({ success: true, data: {} });
+});
+
 module.exports = router;

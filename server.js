@@ -1,54 +1,26 @@
 const express = require("express");
+const connectDB = require("./config/db");
 const app = express();
-const port = 5000;
+const port = process.env.PORT;
+require("dotenv").config();
 
-const ideas = [
-  {
-    id: 1,
-    text: "Positive newsletter, a newsletter that only shares positive, uplifting news",
-    tag: "Technology",
-    username: "TonyStark",
-    date: "12-04-2024",
-  },
-  {
-    id: 2,
-    text: "Milk cartons that turn a different color the older that your milk is getting",
-    tag: "Inventions",
-    username: "BruceBanner",
-    date: "10-04-2024",
-  },
-  {
-    id: 3,
-    text: "ATM location app which lets you know where the closest ATM is and if it is in service",
-    tag: "Software",
-    username: "SteveRoger",
-    date: "02-04-2024",
-  },
-];
+connectDB();
+
+// we need to accept a raw data json
+// using bodyparser middleware, parsing data in the body
+// allow us to send raw json to the server
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 app.get("/", (req, res) => {
   res.send("Welcome to the random ideas homepage");
 });
 
-// get all ideas
-app.get("/api/posts", (req, res) => {
-  res.send({ success: true, data: ideas });
-});
+const ideasRouter = require("./routes/ideas");
 
-// get specific idea from an id
-app.get("/api/posts/:id", (req, res) => {
-  // to get the id, use query params, start with colon:
-  // the way to access is to used requst object req.params.id
-  const idea = ideas.find((idea) => idea.id == +req.params.id);
-
-  if (!idea) {
-    return res
-      .status(404)
-      .json({ success: false, error: "Resource not found" });
-  }
-  res.json({ success: true, data: idea });
-});
+// middleware is something that happen between request and response
+app.use("/api/posts", ideasRouter);
 
 app.listen(port, () => {
-  console.log(`Running server listening on port${port}`);
+  console.log(`Running server listening on port: ${process.env.PORT}`);
 });
