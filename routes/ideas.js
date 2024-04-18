@@ -1,95 +1,84 @@
 const express = require("express");
 const router = express.Router();
-
-const ideas = [
-  {
-    id: 1,
-    text: "Positive newsletter, a newsletter that only shares positive, uplifting news",
-    tag: "Technology",
-    username: "TonyStark",
-    date: "12-04-2024",
-  },
-  {
-    id: 2,
-    text: "Milk cartons that turn a different color the older that your milk is getting",
-    tag: "Inventions",
-    username: "BruceBanner",
-    date: "10-04-2024",
-  },
-  {
-    id: 3,
-    text: "ATM location app which lets you know where the closest ATM is and if it is in service",
-    tag: "Software",
-    username: "SteveRoger",
-    date: "02-04-2024",
-  },
-];
+const Idea = require("../models/Idea");
 
 // get all ideas
-router.get("/", (req, res) => {
-  res.send({ success: true, data: ideas });
+router.get("/", async (req, res) => {
+  // when we use an models, in this case idea which is our models
+  // using idea.find to get the record of documents in the database. That is asynchronous that return promise
+  // so we gonna use async await
+
+  try {
+    const ideas = await Idea.find();
+    res.json({ success: true, data: ideas });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: "No resource found" });
+  }
 });
 
 // get single specific idea from an id
-router.get("/:id", (req, res) => {
-  const idea = ideas.find((idea) => idea.id == +req.params.id);
-
-  if (!idea) {
-    return res
-      .status(404)
-      .json({ success: false, error: "Resource not found" });
+router.get("/:id", async (req, res) => {
+  try {
+    const idea = await Idea.findById(req.params.id);
+    res.json({ success: true, data: idea });
+  } catch (error) {
+    res.status(404).json({ success: false, error: "Resource not found" });
   }
-  res.json({ success: true, data: idea });
 });
 
 // add middleware to say that if we go to an api/ideas. then we want to look at that folder files
 // by adding middleware is on the request object, when we get the request then we can access req.body.field
 
 // Add and idea
-router.post("/", (req, res) => {
-  const idea = {
-    id: ideas.length + 1,
+router.post("/", async (req, res) => {
+  const idea = new Idea({
     text: req.body.text,
     tag: req.body.tag,
     username: req.body.username,
-    date: req.body.date,
-  };
-
-  ideas.push(idea);
-
-  res.json({ success: true, data: ideas });
+  });
+  try {
+    // we gonna use the save method
+    const saveIdea = await idea.save();
+    res.json({ success: true, data: saveIdea });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: "Server went wrong" });
+  }
 });
 
 // update post
-router.put("/:id", (req, res) => {
-  const idea = ideas.find((idea) => (idea.id = +req.params.id));
-
-  if (!idea) {
-    return req
-      .status(400)
-      .json({ success: false, error: "Resource not found" });
+router.put("/:id", async (req, res) => {
+  try {
+    const updatedIdea = await Idea.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: {
+          text: req.body.text,
+          tag: req.body.tag,
+        },
+      },
+      {
+        // if the id doesn't exists, then make new of the idea
+        new: true,
+      }
+    );
+    res.json({ success: true, data: updatedIdea });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: "Server went wrong" });
   }
-
-  idea.text = req.body.text || idea.text;
-  idea.tag = req.body.tag || idea.tag;
-
-  res.json({ success: true, data: idea });
 });
 
 // delete post
-router.delete("/:id", (req, res) => {
-  const idea = ideas.find((idea) => (idea.id = +req.params.id));
-
-  if (!idea) {
-    return req
-      .status(400)
-      .json({ success: false, error: "Resource not found" });
+router.delete("/:id", async (req, res) => {
+  try {
+    Idea.findByIdAndDelete(req.params.id);
+    res.json({ success: true, data: {} });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ success: false, error: "Server went wrong" });
   }
-
-  const index = ideas.indexOf(idea);
-  ideas.splice(index, 1);
-
-  res.json({ success: true, data: {} });
 });
 
 module.exports = router;
