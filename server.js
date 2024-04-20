@@ -1,5 +1,6 @@
 const path = require("path");
 const express = require("express");
+const cors = require("cors");
 const connectDB = require("./config/db");
 require("dotenv").config();
 const app = express();
@@ -15,6 +16,14 @@ app.use(express.static(path.join(__dirname, "public")));
 // allow us to send raw json to the server
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// cors middleware
+app.use(
+  cors({
+    origin: ["http://localhost:5000", "http://localhost:3000"],
+    credentials: true,
+  })
+);
 
 app.get("/", (req, res) => {
   res.send("Welcome to the random ideas homepage");

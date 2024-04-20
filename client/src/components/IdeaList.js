@@ -1,31 +1,13 @@
+import ideasApi from "../services/ideasApi";
+import IdeaApi from "../services/ideasApi";
+
 class IdeaList {
   constructor() {
     this._ideaListEl = document.querySelector("#idea-list");
     // empty, then will get the get idea method that will fetch them through our api service
     // then fill the array ideas with the backend idea that in our database
-    this._ideas = [
-      {
-        id: 1,
-        text: "idea 1",
-        tag: "Business",
-        username: "John",
-        date: "19/04/2024",
-      },
-      {
-        id: 2,
-        text: "idea 2",
-        tag: "Software",
-        username: "Winston",
-        date: "20/04/2024",
-      },
-      {
-        id: 1,
-        text: "idea 3",
-        tag: "Education",
-        username: "Baba yaga",
-        date: "21/04/2024",
-      },
-    ];
+    this._ideas = [];
+    this.getIdeas();
     this._validTags = new Set();
     this._validTags.add("technology");
     this._validTags.add("education");
@@ -33,6 +15,44 @@ class IdeaList {
     this._validTags.add("business");
     this._validTags.add("health");
     this._validTags.add("inventions");
+  }
+
+  addEventListener() {
+    this._ideaListEl.addEventListener("click", (e) => {
+      if (e.target.classList.contains("fa-times")) {
+        e.stopImmediatePropagation();
+        // whenever we have data-id, we can get the id using dataset.
+        const ideaId = e.target.parentElement.parentElement.dataset.id;
+        this.deleteIdea(ideaId);
+      }
+    });
+  }
+
+  async getIdeas() {
+    try {
+      const res = await IdeaApi.getIdea();
+      this._ideas = res.data.data;
+      this.render();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  addIdeaToList(idea) {
+    this._ideas.push(idea);
+    this.render();
+  }
+  async deleteIdea(ideaid) {
+    try {
+      // delete from server. gonna do that through api class method
+      const res = await ideasApi.deleteIdea(ideaid);
+      // delete from the DOM
+      // this filter will get all but the ones that has been deleted
+      this._ideas.filter((idea) => idea._id !== ideaid);
+      this.getIdeas();
+    } catch (error) {
+      alert("You can not delete this resource: ", error);
+    }
   }
 
   getTagClass(tag) {
@@ -51,9 +71,13 @@ class IdeaList {
     this._ideaListEl.innerHTML = this._ideas
       .map((idea) => {
         const tagClass = this.getTagClass(idea.tag);
+        const deleteBtn =
+          idea.username === localStorage.getItem("username")
+            ? `<button class="delete"><i class="fas fa-times"></i></button>`
+            : "";
         return `
-        <div class="card">
-          <button class="delete"><i class="fas fa-times"></i></button>
+        <div class="card" data-id="${idea._id}">
+          ${deleteBtn}
           <h3>
             ${idea.text}
           </h3>
@@ -65,6 +89,7 @@ class IdeaList {
         </div>`;
       })
       .join("");
+    this.addEventListener();
   }
 }
 

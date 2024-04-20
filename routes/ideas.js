@@ -50,20 +50,32 @@ router.post("/", async (req, res) => {
 // update post
 router.put("/:id", async (req, res) => {
   try {
-    const updatedIdea = await Idea.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          text: req.body.text,
-          tag: req.body.tag,
+    const idea = await Idea.findById(req.params.id);
+
+    if (idea.username === req.body.username) {
+      const updatedIdea = await Idea.findByIdAndUpdate(
+        req.params.id,
+        {
+          $set: {
+            text: req.body.text,
+            tag: req.body.tag,
+          },
         },
-      },
-      {
-        // if the id doesn't exists, then make new of the idea
-        new: true,
-      }
-    );
-    res.json({ success: true, data: updatedIdea });
+        {
+          // if the id doesn't exists, then make new of the idea
+          new: true,
+        }
+      );
+      return res.json({ success: true, data: updatedIdea });
+    }
+
+    // username do not match
+    res
+      .status(403)
+      .json({
+        success: false,
+        error: "Forbiden, you are not authorize to edit this",
+      });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: "Server went wrong" });
@@ -73,8 +85,21 @@ router.put("/:id", async (req, res) => {
 // delete post
 router.delete("/:id", async (req, res) => {
   try {
-    Idea.findByIdAndDelete(req.params.id);
-    res.json({ success: true, data: {} });
+    const idea = await Idea.findById(req.params.id);
+
+    // match the username to validate
+    if (idea.username === req.body.username) {
+      await Idea.findByIdAndDelete(req.params.id);
+      return res.json({ success: true, data: {} });
+    }
+
+    // username do not match
+    res
+      .status(403)
+      .json({
+        success: false,
+        error: "Forbiden, you are not authorize to delete this",
+      });
   } catch (error) {
     console.log(error);
     res.status(500).json({ success: false, error: "Server went wrong" });
